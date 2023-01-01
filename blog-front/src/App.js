@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import Post from './components/Post'
+
+import postService from './services/posts'
 
 import './App.css';
 
@@ -11,10 +12,10 @@ const App = () => {
   const [showAll, setShowAll] = useState(true)
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/posts')
-      .then(res => {
-        setPosts(res.data)
+    postService
+    .getAll()
+      .then(initialPosts => {
+        setPosts(initialPosts)
       })
   }, [])
 
@@ -23,27 +24,25 @@ const App = () => {
     const postObject = {
       title: newTitle,
       content: newContent,
-      data: new Date(),
+      data: new Date().toISOString(),
       important: Math.random() > 0.5
     }
-    axios
-      .post('http://localhost:3001/posts', postObject)
-      .then(res => {
-        setPosts(posts.concat(res.data))
+
+    postService
+      .create(postObject)
+      .then(returnedPost => {
+        setPosts(posts.concat(returnedPost))
         setNewTitle('')
         setNewContent('')
-        console.log(res)
       })
 
   }
 
   const handleTitleChange = (event) => {
-    console.log(event.target.value)
     setNewTitle(event.target.value)
   }
 
   const handleContentChange = (event) => {
-    console.log(event.target.value)
     setNewContent(event.target.value)
   }
 
@@ -52,13 +51,33 @@ const App = () => {
     : posts.filter(post => post.important)
 
   const toggleImportanceOf = (id) => {   
-    const url = `http://localhost:3001/posts/${id}`
     const post = posts.find(n => n.id === id)
     const changedPost = { ...post, important: !post.important}
 
-    axios.put(url, changedPost).then(res => {
-      setPosts(posts.map(n => n.id !== id ? n : res.data))
-    })
+    postService
+      .update(id, changedPost).then(returnedPost => {
+        setPosts(posts.map(post => post.id !== id ? post : returnedPost))
+      })
+      .catch(error => {
+        alert(
+          `the post '${post.title}' was already deleted from the server`
+        )
+        setPosts(posts.filter(n => n.id !== id))
+      })
+  }
+
+  const deletePostOf = (id) => {
+    const post = posts.find(n => n.id === id)
+    const confirmDelete = window.confirm(`Are you sure you want to delete ${post.title}?`)
+
+    if (confirmDelete) {
+      postService
+      .deletePost(id).then(returnedPost => {
+        posts.map(post => post.id !== id ? post : returnedPost)
+      })
+      setPosts(posts.filter(post => post.id !== id))
+    }
+    
   }
 
     return (
@@ -75,6 +94,7 @@ const App = () => {
             key={post.id} 
             post={post}
             toggleImportance={() => toggleImportanceOf(post.id)} 
+            deletePost={() => deletePostOf(post.id)}
             />
             )}
         </ul>
