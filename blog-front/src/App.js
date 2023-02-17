@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import Post from './components/Post'
+import PostList from './components/PostList'
+import TaskForm from './components/TaskForm'
 
 import postService from './services/posts'
 
@@ -66,6 +67,8 @@ const App = () => {
       })
   }
 
+
+
   const deletePostOf = (id) => {
     const post = posts.find(n => n.id === id)
     const confirmDelete = window.confirm(`Are you sure you want to delete ${post.title}?`)
@@ -77,7 +80,6 @@ const App = () => {
       })
       setPosts(posts.filter(post => post.id !== id))
     }
-    
   }
 
     return (
@@ -88,27 +90,18 @@ const App = () => {
             show {showAll ? 'important' : 'all' }
           </button>
         </div>
-        <ul>
-          {postsToShow.map(post =>
-            <Post 
-            key={post.id} 
-            post={post}
-            toggleImportance={() => toggleImportanceOf(post.id)} 
-            deletePost={() => deletePostOf(post.id)}
-            />
-            )}
-        </ul>
-        <form onSubmit={addPost}>
-          <input type="text" 
-          value={newTitle}
-          onChange={handleTitleChange}
+        <PostList
+          postsToShow={postsToShow}
+          toggleImportanceOf={toggleImportanceOf}
+          deletePostOf={deletePostOf} 
           />
-          <input 
-            value={newContent}
-            onChange={handleContentChange} 
-          />
-          <button type="submit">save</button>
-        </form>
+        <TaskForm
+        addPost={addPost} 
+        newTitle={newTitle}
+        handleTitleChange={handleTitleChange}
+        newContent={newContent}
+        handleContentChange={handleContentChange} 
+        />
       </div>
     )
 }
